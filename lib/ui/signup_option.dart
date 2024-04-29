@@ -39,14 +39,15 @@ class _SignupOptionsState extends State<SignupOptions> {
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
     final signupBloc = BlocProvider.of<SignupBloc>(context);
-
     return Scaffold(
       body: BlocListener<SignupBloc, SignupState>(
         listener: (context, state) {
           if (state is SignupErrorState) {
             _showErrorSnackBar(state.message);
-          } else if (state is UserSignupSuccessState || state is AgencySignupSuccessState) {
-            _handleSuccessfulSignup(state);
+          } else if (state is UserSignupSuccessState) {
+            _handleUserSuccessfulSignup();
+          } else if (state is AgencySignupSuccessState) {
+            _handleAgencySuccessfulSignup();
           }
         },
         child: SafeArea(
@@ -140,6 +141,7 @@ class _SignupOptionsState extends State<SignupOptions> {
                             selectedRole = _current ? 'user' : 'agency';
 
                             signupBloc.type = selectedRole;
+                            signupBloc.isAgency = !_current;
 
                             // Navigate to the next page
                             _controller.animateToPage(1,
@@ -219,34 +221,32 @@ class _SignupOptionsState extends State<SignupOptions> {
                             signupBloc.name = nameController.text;
                             signupBloc.language = languageController.text;
                             signupBloc.country = countryController.text;
-
-                            print('${signupBloc.email} OMAR');
-                            print('${signupBloc.type} OMAR');
-                            print('${signupBloc.name} OMAR');
-                            print('${signupBloc.password} OMAR');
-                            // print('${signupBloc.description} OMAR');
-                            // print('${signupBloc.location} OMAR');
-                            print('${signupBloc.language} OMAR');
-                            // print('${signupBloc.agencyName} OMAR');
-                            print('${signupBloc.country} OMAR');
-
-                            signupBloc.add(
-                              RegisterButtonPressed(
-                                type:signupBloc.type?? '',
-                                email: signupBloc.email ?? '',
-                                password: signupBloc.password ?? '',
-                                name: signupBloc.name ?? '',
-                                agencyName: signupBloc.agencyName ?? '',  // this will be null
-                                language: signupBloc.language ?? '',
-                                country: signupBloc.country ?? '',
-                                location: signupBloc.location ?? '',// this will be null
-                                description: signupBloc.description ?? '', // this will be null
-                              ),
-                            );
-
+                            if (signupBloc.isAgency) {
+                              _controller.animateToPage(2,
+                                  duration: Duration(microseconds: 300), curve: Curves.easeIn);
+                            } else {
+                              signupBloc.add(
+                                RegisterButtonPressed(
+                                  type: signupBloc.type ?? '',
+                                  email: signupBloc.email ?? '',
+                                  password: signupBloc.password ?? '',
+                                  name: signupBloc.name ?? '',
+                                  agencyName: signupBloc.agencyName ?? '',
+                                  language: signupBloc.language ?? '',
+                                  country: signupBloc.country ?? '',
+                                  location: signupBloc.location ?? '',
+                                  description: signupBloc.description ?? '', // this will be null
+                                ),
+                              );
+                            }
                           },
-                          child:
-                              Text("Continue", style: TextStyle(color: Colors.white, fontSize: size.width * 0.04)),
+                          child: Text(
+                            "Continue",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: size.width * 0.04,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -306,11 +306,33 @@ class _SignupOptionsState extends State<SignupOptions> {
                             backgroundColor: Colors.lightBlueAccent,
                           ),
                           onPressed: () {
-                            Navigator.pushReplacement(
-                                context, MaterialPageRoute(builder: (context) => AgencyPanelScreen()));
+                            signupBloc.description = descriptionController.text;
+                            signupBloc.location = locationController.text;
+                            signupBloc.agencyName = agencyNameController.text;
+                            signupBloc.add(
+                              RegisterButtonPressed(
+                                type: signupBloc.type ?? '',
+                                email: signupBloc.email ?? '',
+                                password: signupBloc.password ?? '',
+                                name: signupBloc.name ?? '',
+                                agencyName: signupBloc.agencyName ?? '',
+                                language: signupBloc.language ?? '',
+                                country: signupBloc.country ?? '',
+                                location: signupBloc.location ?? '',
+                                description: signupBloc.description ?? '',
+                              ),
+                            );
+
+                            // Navigator.pushReplacement(
+                            //     context, MaterialPageRoute(builder: (context) => AgencyPanelScreen()));
                           },
-                          child:
-                              Text("Continue", style: TextStyle(color: Colors.white, fontSize: size.width * 0.04)),
+                          child: Text(
+                            "Continue",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: size.width * 0.04,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -331,12 +353,16 @@ class _SignupOptionsState extends State<SignupOptions> {
     );
   }
 
-  void _handleSuccessfulSignup(SignupState state) {
-    if (state is UserSignupSuccessState || state is AgencySignupSuccessState) {
-      Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => UserPage()));
-    } else {
-      _showErrorSnackBar('Invalid signup state.');
-    }
+  void _handleUserSuccessfulSignup() {
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => UserPage()));
+  }
+
+  void _handleAgencySuccessfulSignup() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AgencyPanelScreen(),
+      ),
+    );
   }
 }

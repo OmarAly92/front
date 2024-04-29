@@ -25,7 +25,7 @@ class RegisterButtonPressed extends SignupEvents {
     required this.password,
     required this.name,
     required this.agencyName,
-    required  this.type ,
+    required this.type,
     required this.language,
     required this.country,
     required this.location,
